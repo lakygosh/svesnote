@@ -1,45 +1,44 @@
-﻿# Funkcionalnosti aplikacije Svesnote
+﻿# Svesnote Application Features
 
-## Pregled
-- Flutter aplikacija sa Supabase email/password autentikacijom.
-- `main.dart` poziva `Supabase.initialize` (Supabase URL + anon ključ) i pokreće `MyApp` sa `AuthGate` kao početnim widgetom.
+## Overview
+- Flutter application with Supabase email/password authentication.
+- `main.dart` calls `Supabase.initialize` (Supabase URL + anon key) and launches `MyApp` with `AuthGate` as the initial widget.
 
-## Navigacija i tok sesije
-- `AuthGate` koristi `onAuthStateChange` strim i trenutno stanje sesije; ako postoji session -> `HomeScreen`, ako ne -> `LoginScreen`.
-- Supabase pamti session lokalno; ponovni start aplikacije automatski prolazi kroz isti gate.
+## Navigation and Session Flow
+- `AuthGate` uses `onAuthStateChange` stream and current session state; if session exists -> `HomeScreen`, otherwise -> `LoginScreen`.
+- Supabase persists session locally; restarting the application automatically goes through the same gate.
 
 ## LoginScreen (lib/auth/login_screen.dart)
-- Dva `TextField` polja za email i lozinku; stateful ekran.
-- Dugmad: `Login` poziva `signInWithPassword`; ispod forme je link "Don't have an account? Sign up" koji vodi na registraciju.
-- `_loading` blokira interakcije i prikazuje `...`; greške (`AuthException` ili fallback poruka) se prikazuju crveno ispod formi.
-- Nakon uspešnog login-a ili signup-a (ako su email potvrde isključene), `AuthGate` preusmerava na `HomeScreen`.
+- Two `TextField` fields for email and password; stateful screen.
+- Buttons: `Login` calls `signInWithPassword`; below the form is a "Don't have an account? Sign up" link that navigates to registration.
+- `_loading` blocks interactions and shows `...`; errors (`AuthException` or fallback message) are displayed in red below the forms.
+- After successful login or signup (if email verification is disabled), `AuthGate` redirects to `HomeScreen`.
 
 ## RegisterScreen (lib/auth/register_screen.dart)
-- Step-by-step registracija: email -> lozinka + potvrda -> username.
-- Validacije: email format, lozinka min 6 karaktera, lozinke se poklapaju, username nije prazan.
-- `signUp` upisuje `username` u `user_metadata`; ako nema session-a (email potvrda uključena), pokušava `signInWithPassword`.
-- Nakon uspešne registracije i login-a navigira na `HomeScreen`.
+- Step-by-step registration: email -> password + confirmation -> username.
+- Validations: email format, password minimum 6 characters, passwords match, username not empty.
+- `signUp` writes `username` to `user_metadata`; if there's no session (email verification enabled), it attempts `signInWithPassword`.
+- After successful registration and login, navigates to `HomeScreen`.
 
 ## HomeScreen (lib/home/home_screen.dart)
-- Čita `Supabase.instance.client.auth.currentUser` i prikazuje email + username (iz `user_metadata`).
-- Dugme "New entry" kreira prazan unos u tabeli `entries` i osvežava listu.
-- Lista unosa se učitava iz Supabase (`entries` za trenutnog korisnika, sortirano po `created_at` opadajuće).
-- Svaki unos prikazuje datum/vreme i preview transcript-a (prvih 40 karaktera); ako nema, prikazuje "No transcript yet".
-- Stanja: loading spinner, greške kao tekst u listi, `RefreshIndicator` omogućava pull-to-refresh.
-- Logout ikonica u `AppBar` poziva `signOut` i vraća korisnika na login ekran.
+- Reads `Supabase.instance.client.auth.currentUser` and displays email + username (from `user_metadata`).
+- "New entry" button creates an empty entry in the `entries` table and refreshes the list.
+- Entry list is loaded from Supabase (`entries` for current user, sorted by `created_at` descending).
+- Each entry displays date/time and transcript preview (first 40 characters); if none, displays "No transcript yet".
+- States: loading spinner, errors displayed as text in the list, `RefreshIndicator` enables pull-to-refresh.
+- Logout icon in `AppBar` calls `signOut` and returns user to login screen.
 
 ## Entries (lib/models/entry.dart, lib/data/entries_repo.dart)
 - `Entry` model: `id`, `userId`, `createdAt`, `audioPath`, `transcript`, `durationSeconds` + `fromJson/toJson`.
-- `EntriesRepo` koristi `Supabase.instance.client` i `currentUser.id` za `fetchEntries()` i `createEmptyEntry()`.
+- `EntriesRepo` uses `Supabase.instance.client` and `currentUser.id` for `fetchEntries()` and `createEmptyEntry()`.
 
+## Other
+- `main.dart` contains a template `MyHomePage` counter screen that is currently not used in navigation.
+- Minimal entry list support has been added (without audio recording and transcription).
 
-## Ostalo
-- `main.dart` sadrži šablonski `MyHomePage` counter ekran koji se trenutno ne koristi u navigaciji.
-- Dodata je minimalna podrška za listu unosa (bez audio snimanja i transkripcije).
-
-## Brzi korisnički flow
-1. Start aplikacije -> Supabase init -> ulazak u `AuthGate`.
-2. Postoji session => otvara se `HomeScreen`.
-3. Nema sesije => prikazuje se `LoginScreen`.
-4. Klik na `Login` ili `Register` poziva Supabase auth; eventualne greške se prikazuju.
-5. Klik na logout na Home vraća korisnika na login.
+## Quick User Flow
+1. App start -> Supabase init -> entry to `AuthGate`.
+2. Session exists => `HomeScreen` opens.
+3. No session => `LoginScreen` is displayed.
+4. Click on `Login` or `Register` calls Supabase auth; any errors are displayed.
+5. Click logout on Home returns user to login.
